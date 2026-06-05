@@ -20,23 +20,24 @@ return {
   },
   {
     'zk-org/zk-nvim',
+    -- Lazy-load when a zk command or keymap is first used, rather than running
+    -- setup (and registering keymaps) eagerly at startup.
+    cmd = { 'ZkNew', 'ZkNotes', 'ZkTags', 'ZkMatch', 'ZkNewFromTitleSelection', 'ZkNewFromContentSelection' },
+    keys = {
+      { '<leader>zn', "<Cmd>ZkNew { title = vim.fn.input('Title: ') }<CR>", desc = 'zk [n]ew note' },
+      -- Open notes.
+      { '<leader>zo', "<Cmd>ZkNotes { sort = { 'modified' } }<CR>", desc = 'zk [o]pen notes' },
+      -- Open notes associated with the selected tags.
+      { '<leader>zt', '<Cmd>ZkTags<CR>', desc = 'zk [t]ags' },
+      -- Search for the notes matching a given query.
+      { '<leader>zf', "<Cmd>ZkNotes { sort = { 'modified' }, match = { vim.fn.input('Search: ') } }<CR>", desc = 'zk [f]ind notes' },
+      -- Search for the notes matching the current visual selection.
+      { '<leader>zf', ":'<,'>ZkMatch<CR>", mode = 'v', desc = 'zk match selection' },
+    },
     config = function()
       require('zk').setup {
         picker = 'telescope',
       }
-      local opts = { noremap = true, silent = false }
-
-      vim.api.nvim_set_keymap('n', '<leader>zn', "<Cmd>ZkNew { title = vim.fn.input('Title: ') }<CR>", opts)
-
-      -- Open notes.
-      vim.api.nvim_set_keymap('n', '<leader>zo', "<Cmd>ZkNotes { sort = { 'modified' } }<CR>", opts)
-      -- Open notes associated with the selected tags.
-      vim.api.nvim_set_keymap('n', '<leader>zt', '<Cmd>ZkTags<CR>', opts)
-
-      -- Search for the notes matching a given query.
-      vim.api.nvim_set_keymap('n', '<leader>zf', "<Cmd>ZkNotes { sort = { 'modified' }, match = { vim.fn.input('Search: ') } }<CR>", opts)
-      -- Search for the notes matching the current visual selection.
-      vim.api.nvim_set_keymap('v', '<leader>zf', ":'<,'>ZkMatch<CR>", opts)
     end,
   },
   -- {
