@@ -107,7 +107,7 @@ return {
   },
   {
     'davidgranstrom/scnvim',
-    ft = { 'sclang', 'scd' },
+    ft = 'supercollider', -- .scd files are filetype `supercollider` (not `scd`/`sclang`)
     config = function()
       local scnvim = require 'scnvim'
       local map = scnvim.map

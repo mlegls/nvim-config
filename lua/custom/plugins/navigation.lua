@@ -18,7 +18,20 @@ return {
     'ThePrimeagen/harpoon',
     branch = 'harpoon2',
     dependencies = { 'nvim-lua/plenary.nvim', 'nvim-telescope/telescope.nvim' },
-    init = function()
+    -- Lazy-load on the harpoon keymaps. (Previously this lived in `init`, which
+    -- runs at startup and `require`d harpoon there, force-loading it — and
+    -- telescope — on every launch.)
+    keys = {
+      '<leader>ha',
+      '<leader>hh',
+      '<leader>h1',
+      '<leader>h2',
+      '<leader>h3',
+      '<leader>h4',
+      '<leader>hp',
+      '<leader>hn',
+    },
+    config = function()
       local harpoon = require 'harpoon'
 
       -- REQUIRED
@@ -47,7 +60,7 @@ return {
       -- keymaps
       vim.keymap.set('n', '<leader>ha', function()
         harpoon:list():add()
-      end)
+      end, { desc = 'Harpoon [a]dd file' })
       -- vim.keymap.set('n', '<leader>hh', function()
       --   harpoon.ui:toggle_quick_menu(harpoon:list())
       -- end)
@@ -58,13 +71,13 @@ return {
       vim.keymap.set('n', '<leader>h1', function()
         harpoon:list():select(1)
       end)
-      vim.keymap.set('n', '<header>h2', function()
+      vim.keymap.set('n', '<leader>h2', function()
         harpoon:list():select(2)
       end)
       vim.keymap.set('n', '<leader>h3', function()
         harpoon:list():select(3)
       end)
-      vim.keymap.set('n', '<header>h4', function()
+      vim.keymap.set('n', '<leader>h4', function()
         harpoon:list():select(4)
       end)
 
