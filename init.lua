@@ -162,16 +162,24 @@ vim.opt.rtp:prepend(lazypath)
 -- NOTE: Here is where you install your plugins.
 require('lazy').setup({
   'tpope/vim-sleuth', -- Detect tabstop and shiftwidth automatically
-  -- 'github/copilot.vim',
   {
-    'supermaven-inc/supermaven-nvim',
+    'zbirenbaum/copilot.lua',
+    cmd = 'Copilot', -- so `:Copilot auth` loads the plugin
+    event = 'InsertEnter',
     config = function()
-      require('supermaven-nvim').setup {
-        keymaps = {
-          clear_suggestion = '<C-]>',
-          accept_suggestion = '<C-y>',
-          accept_word = '<C-j>',
+      require('copilot').setup {
+        suggestion = {
+          enabled = true,
+          auto_trigger = true, -- show inline suggestions automatically, like supermaven did
+          keymap = {
+            accept = '<C-y>',
+            accept_word = '<C-j>',
+            dismiss = '<C-]>',
+            next = '<M-]>',
+            prev = '<M-[>',
+          },
         },
+        panel = { enabled = false },
       }
     end,
   },
