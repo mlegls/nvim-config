@@ -64,8 +64,10 @@ return {
 
         if vim.tbl_contains(ts.get_installed(), lang) then
           start()
-        else
-          -- auto_install: fetch the parser, then start once it's ready
+        elseif vim.tbl_contains(ts.get_available(), lang) then
+          -- auto_install: fetch the parser, then start once it's ready.
+          -- Guarded by get_available() so filetypes without a known parser
+          -- (e.g. `fidget` notification buffers) don't trigger a warning.
           ts.install(lang):await(function()
             vim.schedule(start)
           end)

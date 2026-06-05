@@ -22,19 +22,6 @@ return {
 
       -- Useful for getting pretty icons, but requires a Nerd Font.
       { 'nvim-tree/nvim-web-devicons', enabled = vim.g.have_nerd_font },
-      {
-        'davidgranstrom/telescope-scdoc.nvim',
-        dependencies = { 'davidgranstrom/scnvim' },
-        cond = function()
-          return vim.bo.filetype == 'supercollider'
-        end,
-      },
-      {
-        'madskjeldgaard/telescope-supercollider.nvim',
-        cond = function()
-          return vim.bo.filetype == 'supercollider'
-        end,
-      },
     },
     config = function()
       -- Two important keymaps to use while in Telescope are:
@@ -71,10 +58,21 @@ return {
       -- Enable Telescope extensions if they are installed
       pcall(require('telescope').load_extension, 'fzf')
       pcall(require('telescope').load_extension, 'ui-select')
-      if vim.bo.filetype == 'supercollider' then
-        pcall(require('telescope').load_extension 'supercollider')
-        pcall(require('telescope').load_extension, 'scdoc')
-      end
+
+      -- Load the SuperCollider extensions the first time a supercollider buffer
+      -- is opened. (Previously this was gated on `vim.bo.filetype` at VimEnter,
+      -- when the filetype is still empty, so it never ran.) Scheduled so the
+      -- ft-lazy extension plugins are on the runtimepath before we register them.
+      vim.api.nvim_create_autocmd('FileType', {
+        pattern = 'supercollider',
+        once = true,
+        callback = function()
+          vim.schedule(function()
+            pcall(require('telescope').load_extension, 'supercollider')
+            pcall(require('telescope').load_extension, 'scdoc')
+          end)
+        end,
+      })
 
       -- See `:help telescope.builtin`
       local builtin = require 'telescope.builtin'
@@ -112,5 +110,19 @@ return {
         builtin.find_files { cwd = vim.fn.stdpath 'config' }
       end, { desc = '[S]earch [N]eovim files' })
     end,
+  },
+
+  -- SuperCollider telescope extensions: lazy-load on supercollider files only
+  -- (registered by the FileType autocmd in the telescope config above), so they
+  -- don't drag scnvim in at startup for non-SuperCollider sessions.
+  {
+    'davidgranstrom/telescope-scdoc.nvim',
+    ft = 'supercollider',
+    dependencies = { 'davidgranstrom/scnvim', 'nvim-telescope/telescope.nvim' },
+  },
+  {
+    'madskjeldgaard/telescope-supercollider.nvim',
+    ft = 'supercollider',
+    dependencies = { 'davidgranstrom/scnvim', 'nvim-telescope/telescope.nvim' },
   },
 }
