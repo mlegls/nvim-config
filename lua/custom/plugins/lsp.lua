@@ -221,5 +221,6 @@ return {
   {
     'calops/hmts.nvim',
     version = '*',
+    ft = 'nix', -- hmts ships treesitter injection queries for nix only
   },
 }

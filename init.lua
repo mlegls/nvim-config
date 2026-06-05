@@ -228,9 +228,10 @@ require('lazy').setup({
   -- },
   {
     'mbbill/undotree',
-    init = function()
-      vim.keymap.set('n', '<leader>u', vim.cmd.UndotreeToggle)
-    end,
+    cmd = { 'UndotreeToggle', 'UndotreeShow', 'UndotreeFocus', 'UndotreeHide' },
+    keys = {
+      { '<leader>u', vim.cmd.UndotreeToggle, desc = 'Undotree toggle' },
+    },
   },
 
   -- The following two comments only work if you have downloaded the kickstart repo, not just copy pasted the

@@ -2,10 +2,8 @@ return {
   {
     'akinsho/toggleterm.nvim',
     version = '*',
-    config = function()
-      require('toggleterm').setup {}
-      local Terminal = require('toggleterm.terminal').Terminal
-    end,
+    cmd = { 'ToggleTerm', 'ToggleTermToggleAll', 'TermExec', 'TermSelect' },
+    opts = {},
   },
   {
     'mikavilpas/yazi.nvim',
