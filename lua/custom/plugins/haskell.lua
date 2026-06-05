@@ -1,7 +1,8 @@
 return {
   {
     'mrcjkb/haskell-tools.nvim',
-    version = '^4', -- Recommended
+    version = '^9', -- v9 requires Neovim >= 0.12 and drops the deprecated
+    -- vim.lsp.set_log_level() call; the lua API used below is unchanged.
     lazy = false, -- This plugin is already lazy
     init = function()
       local ht = require 'haskell-tools'
