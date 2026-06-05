@@ -4,8 +4,9 @@ return {
     'neovim/nvim-lspconfig',
     dependencies = {
       -- Automatically install LSPs and related tools to stdpath for Neovim
-      { 'williamboman/mason.nvim', config = true }, -- NOTE: Must be loaded before dependants
-      'williamboman/mason-lspconfig.nvim',
+      -- (mason moved from the williamboman/ to the mason-org/ org; v2.x)
+      { 'mason-org/mason.nvim', config = true }, -- NOTE: Must be loaded before dependants
+      'mason-org/mason-lspconfig.nvim',
       'WhoIsSethDaniel/mason-tool-installer.nvim',
 
       -- Useful status updates for LSP.
@@ -202,20 +203,42 @@ return {
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
       require('mason-lspconfig').setup {
-        handlers = {
-          function(server_name)
-            if server_name == 'rust_analyzer' then
-              return
-            end
-            local server = servers[server_name] or {}
-            -- This handles overriding only values explicitly passed
-            -- by the server configuration above. Useful when disabling
-            -- certain features of an LSP (for example, turning off formatting for ts_ls)
-            server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
-            require('lspconfig')[server_name].setup(server)
-          end,
-        },
+        -- mason-lspconfig 2.x removed the `handlers` option and, by default,
+        -- auto-enables installed servers via vim.lsp.enable(). We disable that
+        -- and set servers up through lspconfig ourselves, so COQ keeps injecting
+        -- its completion capabilities the way it always has.
+        automatic_enable = false,
       }
+
+      local lspconfig = require 'lspconfig'
+
+      -- mason-lspconfig's installed-servers list can include non-LSP tools
+      -- (e.g. stylua); only set up names lspconfig actually has a config for.
+      -- Checked via runtime files (no module load) so it stays quiet and works
+      -- with both the legacy `configs/` layout and the native `lsp/` layout.
+      local function has_lsp_config(name)
+        return #vim.api.nvim_get_runtime_file('lsp/' .. name .. '.lua', false) > 0
+          or #vim.api.nvim_get_runtime_file('lua/lspconfig/configs/' .. name .. '.lua', false) > 0
+      end
+
+      local function setup_server(server_name)
+        -- rust_analyzer is managed by rustaceanvim, not here.
+        if server_name == 'rust_analyzer' or not has_lsp_config(server_name) then
+          return
+        end
+        local server = servers[server_name] or {}
+        -- This handles overriding only values explicitly passed
+        -- by the server configuration above. Useful when disabling
+        -- certain features of an LSP (for example, turning off formatting for ts_ls)
+        server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
+        lspconfig[server_name].setup(server)
+      end
+
+      -- Set up all currently-installed servers (newly installed ones are picked
+      -- up on the next restart).
+      for _, server_name in ipairs(require('mason-lspconfig').get_installed_servers()) do
+        setup_server(server_name)
+      end
     end,
   },
   {
