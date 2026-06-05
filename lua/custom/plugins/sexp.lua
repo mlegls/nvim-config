@@ -1,7 +1,7 @@
 return {
   { 'eraserhd/parinfer-rust' },
   { 'guns/vim-sexp' },
-  { 'vim-sexp-mappings-for-regular-people' },
+  { 'tpope/vim-sexp-mappings-for-regular-people' },
   {
     'Olical/conjure',
     ft = { 'clojure', 'fennel', 'hy', 'python', 'lua', 'julia', 'rust' }, -- etc
