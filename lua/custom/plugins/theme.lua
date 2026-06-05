@@ -73,7 +73,10 @@ return {
     config = function()
       require('lualine').setup {
         options = {
-          theme = 'catppuccin',
+          -- catppuccin no longer ships a `catppuccin` lualine theme name (only
+          -- per-flavour ones); use its util so the statusline follows the active
+          -- flavour. Previously this silently fell back to lualine's `auto`.
+          theme = require('catppuccin.utils.lualine')(),
           section_separators = '',
           component_separators = '',
         },
