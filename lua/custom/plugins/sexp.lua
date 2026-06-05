@@ -18,8 +18,8 @@ return {
       -- vim.g["conjure#debug"] = true
     end,
     -- NOTE: the optional cmp-conjure integration was removed — this config uses
-    -- COQ for completion, so the nvim-cmp conjure source was dead weight (and
-    -- pulled nvim-cmp back in, erroring with "module 'cmp' not found").
+    -- blink.cmp for completion, so the nvim-cmp conjure source was dead weight
+    -- (and pulled nvim-cmp back in, erroring with "module 'cmp' not found").
   },
 
   -- langs

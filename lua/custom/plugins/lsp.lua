@@ -13,26 +13,9 @@ return {
       -- NOTE: `opts = {}` is the same as calling `require('fidget').setup({})`
       { 'j-hui/fidget.nvim', opts = {} },
 
-      -- Allows extra capabilities provided by nvim-cmp
-      -- 'hrsh7th/cmp-nvim-lsp',
-
-      -- Coq (autocomplete)
-      -- main one
-      { 'ms-jpq/coq_nvim', branch = 'coq' },
-
-      -- 9000+ Snippets
-      { 'ms-jpq/coq.artifacts', branch = 'artifacts' },
-
-      -- lua & third party sources -- See https://github.com/ms-jpq/coq.thirdparty
-      -- Need to **configure separately**
-      { 'ms-jpq/coq.thirdparty', branch = '3p' },
+      -- Completion engine; provides the extra LSP capabilities advertised below.
+      'saghen/blink.cmp',
     },
-    init = function()
-      vim.g.coq_settings = {
-        auto_start = true, -- if you want to start COQ at startup
-        -- Your COQ settings here
-      }
-    end,
     config = function()
       --  This function gets run when an LSP attaches to a particular buffer.
       --    That is to say, every time a new file is opened that is associated with
@@ -133,8 +116,9 @@ return {
       --  By default, Neovim doesn't support everything that is in the LSP specification.
       --  When you add nvim-cmp, luasnip, etc. Neovim now has *more* capabilities.
       --  So, we create new capabilities with nvim cmp, and then broadcast that to the servers.
-      local capabilities = vim.lsp.protocol.make_client_capabilities()
-      -- capabilities = vim.tbl_deep_extend('force', capabilities, require('cmp_nvim_lsp').default_capabilities())
+      -- Broadcast the extra completion capabilities provided by blink.cmp so
+      -- servers advertise full completion support.
+      local capabilities = require('blink.cmp').get_lsp_capabilities()
 
       -- Enable the following language servers
       --  Feel free to add/remove any LSPs that you want here. They will automatically be installed.
@@ -145,34 +129,17 @@ return {
       --  - capabilities (table): Override fields in capabilities. Can be used to disable certain LSP features.
       --  - settings (table): Override the default settings passed when initializing the server.
       --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
-      local util = require 'lspconfig.util'
+      -- Per-server overrides. Keys are nvim-lspconfig server names; the base
+      -- config (cmd/filetypes/root) is provided by nvim-lspconfig's native
+      -- `lsp/<name>.lua`, and these tables layer on top via `vim.lsp.config`.
       local servers = {
         biome = {
-          root_dir = function(fname)
-            return util.root_pattern('biome.json', 'biome.jsonc')(fname)
-              or util.find_package_json_ancestor(fname)
-              or util.find_node_modules_ancestor(fname)
-              or util.find_git_ancestor(fname)
-          end,
+          -- Resolve project root from biome config, then package.json, then git.
+          root_markers = { { 'biome.json', 'biome.jsonc' }, 'package.json', '.git' },
         },
-        -- clangd = {},
-        -- gopls = {},
-        -- pyright = {},
-        -- rust_analyzer = {},
-        -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
-        --
-        -- Some languages (like typescript) have entire language plugins that can be useful:
-        --    https://github.com/pmizio/typescript-tools.nvim
-        --
-        -- But for many setups, the LSP (`ts_ls`) will work just fine
         -- ts_ls = {},
-
         -- nil_ls = {},
-
         lua_ls = {
-          -- cmd = {...},
-          -- filetypes = { ...},
-          -- capabilities = {},
           settings = {
             Lua = {
               completion = {
@@ -187,10 +154,7 @@ return {
 
       -- Ensure the servers and tools above are installed
       --  To check the current status of installed tools and/or manually install
-      --  other tools, you can run
-      --    :Mason
-      --
-      --  You can press `g?` for help in this menu.
+      --  other tools, you can run :Mason (press `g?` for help in that menu).
       require('mason').setup()
 
       -- You can add other tools here that you want Mason to install
@@ -202,43 +166,22 @@ return {
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
+      -- Broadcast blink's capabilities to every server, then layer per-server
+      -- overrides, via the native vim.lsp.config API (nvim-lspconfig 2.x ships
+      -- the base lsp/<name>.lua configs; mason-lspconfig's `handlers` is gone).
+      vim.lsp.config('*', { capabilities = capabilities })
+      for name, opts in pairs(servers) do
+        vim.lsp.config(name, opts)
+      end
+
       require('mason-lspconfig').setup {
-        -- mason-lspconfig 2.x removed the `handlers` option and, by default,
-        -- auto-enables installed servers via vim.lsp.enable(). We disable that
-        -- and set servers up through lspconfig ourselves, so COQ keeps injecting
-        -- its completion capabilities the way it always has.
-        automatic_enable = false,
+        -- Automatically enable (vim.lsp.enable) installed servers, except:
+        --  - rust_analyzer: managed by rustaceanvim
+        --  - stylua: a formatter (run via conform), not a language server
+        automatic_enable = {
+          exclude = { 'rust_analyzer', 'stylua' },
+        },
       }
-
-      local lspconfig = require 'lspconfig'
-
-      -- mason-lspconfig's installed-servers list can include non-LSP tools
-      -- (e.g. stylua); only set up names lspconfig actually has a config for.
-      -- Checked via runtime files (no module load) so it stays quiet and works
-      -- with both the legacy `configs/` layout and the native `lsp/` layout.
-      local function has_lsp_config(name)
-        return #vim.api.nvim_get_runtime_file('lsp/' .. name .. '.lua', false) > 0
-          or #vim.api.nvim_get_runtime_file('lua/lspconfig/configs/' .. name .. '.lua', false) > 0
-      end
-
-      local function setup_server(server_name)
-        -- rust_analyzer is managed by rustaceanvim, not here.
-        if server_name == 'rust_analyzer' or not has_lsp_config(server_name) then
-          return
-        end
-        local server = servers[server_name] or {}
-        -- This handles overriding only values explicitly passed
-        -- by the server configuration above. Useful when disabling
-        -- certain features of an LSP (for example, turning off formatting for ts_ls)
-        server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
-        lspconfig[server_name].setup(server)
-      end
-
-      -- Set up all currently-installed servers (newly installed ones are picked
-      -- up on the next restart).
-      for _, server_name in ipairs(require('mason-lspconfig').get_installed_servers()) do
-        setup_server(server_name)
-      end
     end,
   },
   {

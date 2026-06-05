@@ -5,8 +5,8 @@ return {
   'windwp/nvim-autopairs',
   event = 'InsertEnter',
   -- NOTE: the nvim-cmp dependency + confirm_done integration was removed; this
-  -- config uses COQ for completion, so the cmp wiring was dead and only served
-  -- to pull nvim-cmp in on every InsertEnter.
+  -- config uses blink.cmp for completion (which has its own bracket handling),
+  -- so the cmp wiring was dead and only pulled nvim-cmp in on every InsertEnter.
   config = function()
     require('nvim-autopairs').setup {}
   end,
